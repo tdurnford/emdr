@@ -20,12 +20,12 @@ export const Emdr = memo(() => {
 
     let start: number | undefined;
 
-    // The amplitude is half the screen width minus the ball's width
-    const amplitude =
-      window.innerWidth / 2 -
-      (ballRef.current?.getBoundingClientRect().width ?? 0) / 2;
-
     const updatePosition = (timestamp: number) => {
+      // The amplitude is half the screen width minus the ball's width
+      const amplitude =
+        window.innerWidth / 2 -
+        (ballRef.current?.getBoundingClientRect().width ?? 0) / 2;
+
       if (!isAnimatingRef.current) {
         // Reset the ball's position
         ballRef.current!.style.left = `${amplitude}px`;
