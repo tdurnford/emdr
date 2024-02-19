@@ -1,25 +1,33 @@
 "use client";
 
-import { useRefFrom } from "@/hooks/useRefFrom";
 import { type ElementRef, memo, useEffect, useRef, useState } from "react";
 
-export const Emdr = memo(() => {
-  const ballRef = useRef<ElementRef<"div">>(null);
-  const frequency = 0.3; // Hz
-  const period = 1000 / frequency; // Period of the motion in milliseconds
-  const [isAnimating, setIsAnimating] = useState(true);
+import { useBoolean, useRefFrom } from "@/hooks";
 
+import { Controller } from "./Controller";
+
+export const Emdr = memo(() => {
+  const [frequency, setFrequency] = useState(0.5);
+  const [isAnimating, { toggle }] = useBoolean(false);
+
+  const ballRef = useRef<ElementRef<"div">>(null);
   const isAnimatingRef = useRefFrom(isAnimating);
 
   useEffect(() => {
-    if (!isAnimating) return;
+    if (!isAnimating) {
+      return;
+    }
 
-    const audioContext = new window.AudioContext();
-    const amplitude = window.innerWidth / 2 - 28; // Half of the window width minus half of the ball's width
     let start: number | undefined;
+
+    // The amplitude is half the screen width minus the ball's width
+    const amplitude =
+      window.innerWidth / 2 -
+      (ballRef.current?.getBoundingClientRect().width ?? 0) / 2;
 
     const updatePosition = (timestamp: number) => {
       if (!isAnimatingRef.current) {
+        // Reset the ball's position
         ballRef.current!.style.left = `${amplitude}px`;
         return;
       }
@@ -28,6 +36,7 @@ export const Emdr = memo(() => {
         start = timestamp;
       }
       const elapsed = timestamp - start;
+      const period = 1000 / frequency;
       const x =
         amplitude + amplitude * Math.sin((2 * Math.PI * elapsed) / period);
 
@@ -39,29 +48,21 @@ export const Emdr = memo(() => {
     };
 
     requestAnimationFrame(updatePosition);
-
-    return () => {
-      audioContext.close();
-    };
-  }, [isAnimating, isAnimatingRef, period]);
-
-  const toggleAnimation = () => {
-    setIsAnimating(!isAnimating);
-  };
+  }, [frequency, isAnimating, isAnimatingRef]);
 
   return (
-    <>
+    <div className="h-full flex justify-center items-center overflow-hidden relative">
       <div
         ref={ballRef}
         className="absolute bg-blue-500 border-b-4 border-blue-700 rounded-full h-12 w-12"
       />
-      <button
-        className="bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded absolute bottom-4"
-        onClick={toggleAnimation}
-      >
-        {isAnimating ? "Stop" : "Start"}
-      </button>
-    </>
+      <Controller
+        frequency={frequency}
+        isAnimating={isAnimating}
+        onToggleAnimation={toggle}
+        onSetFrequency={setFrequency}
+      />
+    </div>
   );
 });
 
